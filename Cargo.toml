@@ -1,0 +1,42 @@
+[package]
+name = "mmc5983_rs"
+version = "0.0.1"
+edition = "2021"
+license = "MIT"
+description = "A Rust library for interacting with the MMC5983 magnetometer"
+homepage = "https://docs.rs/mmc5983_rs"
+documentation = "https://docs.rs/mmc5983_rs"
+repository = "https://github.com/RaulTrombin/MMC5983-rs"
+readme = "README.md"
+categories = ["embedded"]
+keywords = ["magnetometer", "sensor", "embedded", "mmc5983", "Memsic"]
+
+
+[dependencies]
+bitflags = "2.6.0"
+embedded-hal = "1.0.0"
+embedded-hal-async = { version = "1.0.0", optional = true }
+maybe-async-cfg = "0.2.5"
+nb = "1.1.0"
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+linux-embedded-hal = "0.4.0"
+
+[target.'cfg(target_os = "none")'.dev-dependencies]
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.3"
+embassy-nrf = { version = "0.2.0", features = ["nrf52833", "time-driver-rtc1", "time"] }
+rtt-target = "0.5.0"
+embedded-hal-async = "1.0.0"
+embassy-executor = { version = "0.5.1", features = ["arch-cortex-m", "executor-thread", "integrated-timers"] }
+embassy-time = "0.3.2"
+panic-rtt-target = "0.2.0"
+
+[features]
+async = ["dep:embedded-hal-async"]
+
+[[example]]
+name = "microbit-v2"
+test = false
+bench = false
+required-features = ["async"]
