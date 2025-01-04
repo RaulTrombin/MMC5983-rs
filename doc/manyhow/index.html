@@ -1,0 +1,187 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Proc macro anyhow, a combination of ideas from `anyhow` and `proc-macro-error` to improve proc macro development, especially focused on the error handling."><title>manyhow - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="manyhow" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../manyhow/index.html">manyhow</a><span class="version">0.11.4</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#motivation" title="Motivation">Motivation</a></li><li><a href="#using-the-manyhow-macro" title="Using the `#[manyhow]` macro">Using the <code>#[manyhow]</code> macro</a></li><li><a href="#without-macros" title="Without macros">Without macros</a></li><li><a href="#emitter-mut-emitter" title="`emitter: &#38;mut Emitter`"><code>emitter: &amp;mut Emitter</code></a></li><li><a href="#dummy-mut-tokenstream" title="`dummy: &#38;mut TokenStream`"><code>dummy: &amp;mut TokenStream</code></a></li><li><a href="#crate-features" title="Crate features">Crate features</a></li></ul><h3><a href="#macros">Crate Items</a></h3><ul class="block"><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li><li><a href="#attributes" title="Attribute Macros">Attribute Macros</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>manyhow</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/manyhow/lib.rs.html#1-850">source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Proc <strong>m</strong>acro <strong>anyhow</strong>, a combination of ideas from
+<a href="docs.rs/anyhow"><code>anyhow</code></a> and
+<a href="docs.rs/proc-macro-error"><code>proc-macro-error</code></a> to improve proc macro
+development, especially focused on the error handling.</p>
+<h2 id="motivation"><a class="doc-anchor" href="#motivation">§</a>Motivation</h2>
+<p>Error handling in proc-macros is unideal, as the top level functions of
+proc-macros can only return <code>TokenStreams</code> both in success and failure case.
+This means that I often write code like this, moving the actual
+implementation in a separate function to be able to use the ergonomic rust
+error handling with e.g., <code>?</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>proc_macro2::TokenStream <span class="kw">as </span>TokenStream2;
+
+<span class="attr">#[proc_macro]
+</span><span class="kw">pub fn </span>my_macro(input: TokenStream) -&gt; TokenStream {
+    <span class="kw">match </span>actual_implementation(input.into()) {
+        <span class="prelude-val">Ok</span>(output) =&gt; output,
+        <span class="prelude-val">Err</span>(error) =&gt; error.into_compile_error(),
+    }
+    .into()
+}
+
+<span class="kw">fn </span>actual_implementation(input: TokenStream2) -&gt; syn::Result&lt;TokenStream2&gt; {
+    <span class="comment">// ..
+</span>}</code></pre></div>
+<h2 id="using-the-manyhow-macro"><a class="doc-anchor" href="#using-the-manyhow-macro">§</a>Using the <code>#[manyhow]</code> macro</h2>
+<p>To activate the error handling, just add <a href="attr.manyhow.html" title="attr manyhow::manyhow"><code>#[manyhow]</code></a> above any
+proc-macro implementation, reducing the above example to:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>manyhow::manyhow;
+<span class="kw">use </span>proc_macro2::TokenStream <span class="kw">as </span>TokenStream2;
+
+<span class="attr">#[manyhow]
+#[proc_macro]
+</span><span class="comment">// You can also merge the two attributes: #[manyhow(proc_macro)]
+</span><span class="kw">fn </span>my_macro(input: TokenStream2) -&gt; syn::Result&lt;TokenStream2&gt; {
+    <span class="comment">// ..
+</span>}
+
+<span class="comment">// On top of the TokenStreams any type that implements [`Parse`] is supported
+</span><span class="attr">#[manyhow(proc_macro_derive(MyMacro))]
+#[proc_macro]
+</span><span class="comment">// The output can also be anything that implements `quote::ToTokens`
+</span><span class="kw">fn </span>my_derive_macro(input: syn::DeriveInput) -&gt; manyhow::Result&lt;syn::ItemImpl&gt; {
+    <span class="comment">// ..
+</span>}</code></pre></div>
+<p>See <a href="#without-macros">Without macros</a> to see what this expands to under the
+hood.</p>
+<p>You can also use the <code>#[manyhow]</code> attributes on a use statement, useful when
+moving your proc-macro implementations in separate modules.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>manyhow::manyhow;
+
+<span class="kw">mod </span>module {
+    <span class="kw">use </span>proc_macro2::TokenStream <span class="kw">as </span>TokenStream2;
+
+    <span class="kw">pub fn </span>my_macro(input: TokenStream2) -&gt; syn::Result&lt;TokenStream2&gt; {
+        <span class="comment">// ..
+    </span>}
+}
+
+<span class="attr">#[manyhow]
+#[proc_macro]
+</span><span class="comment">// You can also merge the two attributes: #[manyhow(proc_macro)]
+</span><span class="kw">pub use </span>module::my_macro;</code></pre></div>
+<p>A proc macro function marked as <code>#[manyhow]</code> can take and return any
+<a href="trait.AnyTokenStream.html" title="trait manyhow::AnyTokenStream"><code>TokenStream</code></a>, and can also return <code>Result&lt;TokenStream, E&gt;</code> where <code>E</code> implements <a href="trait.ToTokensError.html" title="trait manyhow::ToTokensError"><code>ToTokensError</code></a>. As additional parameters a
+<a href="#dummy-mut-tokenstream">dummy</a> and/or <a href="#emitter-mut-emitter">emitter</a> can
+be specified.</p>
+<p>The <code>manyhow</code> attribute takes optional flags to configure its behavior.</p>
+<p>When used for <code>proc_macro</code> and <code>proc_macro_attribute</code>,
+<code>#[manyhow(input_as_dummy, ...)]</code> will take the input of a function like
+<code>proc_macro</code> to initialize the [dummy <code>&amp;mut TokenStream</code>](#
+dummy-mut-tokenstream) while <code>#[manyhow(item_as_dummy, ...)]</code> on
+<code>proc_macro_attribute</code> will initialize the dummy with the annotated item.</p>
+<p>You can merge the <code>#[proc_macro*]</code> attribute inside the manyhow flags e.g.,
+<code>#[manyhow(proc_macro)]</code> or <code>#[manyhow(proc_macro_derive(SomeTrait, ...))]</code>.</p>
+<p>The <code>#[manyhow(impl_fn, ...)]</code> flag will put the actual macro implementation
+in a separate function. Making it available for e.g., unit testing with
+<a href="https://docs.rs/proc-macro-utils/latest/proc_macro_utils/macro.assert_expansion.html"><code>proc_macro_utils::assert_expansion!</code></a>.</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[manyhow(impl_fn)]
+#[proc_macro]
+</span><span class="kw">pub fn </span>actual_macro(input: TokenStream2) -&gt; TokenStream2 {
+    <span class="comment">// ...
+</span>}
+<span class="comment">// would roughly expand to
+</span><span class="attr">#[proc_macro]
+</span><span class="kw">pub fn </span>actual_macro(input: TokenStream) -&gt; TokenStream {
+    actual_macro_impl(input.into()).into()
+}
+<span class="kw">fn </span>actual_macro_impl(input: TokenStream2) -&gt; TokenStream2 {
+    <span class="comment">// ...
+</span>}</code></pre></div>
+<h2 id="without-macros"><a class="doc-anchor" href="#without-macros">§</a>Without macros</h2>
+<p><code>manyhow</code> can be used without proc macros, and they can be disabled by
+adding <code>manyhow</code> with <code>default-features=false</code>.</p>
+<p>The usage is more or less the same, though with some added boilerplate from
+needing to invoke one of <a href="fn.function.html" title="fn manyhow::function"><code>function()</code></a> (<a href="macro.function.html" title="macro manyhow::function"><code>function!</code></a>), <a href="fn.attribute.html" title="fn manyhow::attribute"><code>attribute()</code></a>
+(<a href="macro.attribute.html" title="macro manyhow::attribute"><code>attribute!</code></a>) or <a href="fn.derive.html" title="fn manyhow::derive"><code>derive()</code></a> (<a href="macro.derive.html" title="macro manyhow::derive"><code>derive!</code></a>) directly. For each version
+there exists a function and a <code>macro_rules</code> macro, while the function only
+supports <a href="https://doc.rust-lang.org/1.83.0/proc_macro/struct.TokenStream.html" title="struct proc_macro::TokenStream"><code>proc_macro::TokenStream</code></a> and <a href="../proc_macro2/struct.TokenStream.html" title="struct proc_macro2::TokenStream"><code>proc_macro2::TokenStream</code></a>, the
+macro versions also support any type that implements <a href="https://docs.rs/syn/2.0.94/syn/parse/trait.Parse.html" title="trait syn::parse::Parse"><code>Parse</code></a>
+and <a href="../quote/to_tokens/trait.ToTokens.html" title="trait quote::to_tokens::ToTokens"><code>ToTokens</code></a> respectively.</p>
+<p>While the examples use closures, functions can be passed in as well. The
+above example would then change to:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>proc_macro2::TokenStream <span class="kw">as </span>TokenStream2;
+
+<span class="attr">#[proc_macro]
+</span><span class="kw">pub fn </span>my_macro(input: TokenStream) -&gt; TokenStream {
+    manyhow::function(
+        input,
+        <span class="bool-val">false</span>,
+        |input: TokenStream2| -&gt; syn::Result&lt;TokenStream2&gt; {
+            <span class="comment">// ..
+        </span>},
+    )
+    <span class="comment">// Or
+    </span><span class="macro">manyhow::function!</span>(
+        input,
+        |input: syn::DeriveInput| -&gt; manyhow::Result&lt;syn::ItemImpl&gt; {
+            <span class="comment">// ..
+        </span>},
+    )
+}</code></pre></div>
+<p><a href="#emitter-mut-emitter"><code>Emitter</code></a> and <a href="#dummy-mut-tokenstream">dummy
+<code>TokenStream</code></a> can also be used. <a href="fn.function.html" title="fn manyhow::function"><code>function()</code></a>
+(<a href="macro.function.html" title="macro manyhow::function"><code>function!</code></a>) and <a href="fn.attribute.html" title="fn manyhow::attribute"><code>attribute()</code></a> (<a href="macro.attribute.html" title="macro manyhow::attribute"><code>attribute!</code></a>) take an additional
+boolean parameter controlling whether the input/item will be used as initial
+dummy.</p>
+<h2 id="emitter-mut-emitter"><a class="doc-anchor" href="#emitter-mut-emitter">§</a><code>emitter: &amp;mut Emitter</code></h2>
+<p><a href="trait.FunctionMacroHandler.html" title="trait manyhow::FunctionMacroHandler"><code>*MacroHandler</code></a>s (the traits defining what
+closures/functions can be used with <code>manyhow</code>) can take a mutable reference
+to an <a href="struct.Emitter.html" title="struct manyhow::Emitter"><code>Emitter</code></a>. This allows collecting errors, but not fail immediately.</p>
+<p><a href="struct.Emitter.html#method.into_result" title="method manyhow::Emitter::into_result"><code>Emitter::into_result</code></a> can be used to return if an <a href="struct.Emitter.html" title="struct manyhow::Emitter"><code>Emitter</code></a> contains
+any values.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>manyhow::{manyhow, Emitter, ErrorMessage};
+<span class="kw">use </span>proc_macro2::TokenStream <span class="kw">as </span>TokenStream2;
+
+<span class="attr">#[manyhow]
+#[proc_macro]
+</span><span class="kw">fn </span>my_macro(input: TokenStream2, emitter: <span class="kw-2">&amp;mut </span>Emitter) -&gt; manyhow::Result&lt;TokenStream2&gt; {
+    <span class="comment">// ..
+    </span>emitter.emit(ErrorMessage::call_site(<span class="string">"A fun error!"</span>));
+    emitter.into_result()<span class="question-mark">?</span>;
+    <span class="comment">// ..
+</span>}</code></pre></div>
+<h2 id="dummy-mut-tokenstream"><a class="doc-anchor" href="#dummy-mut-tokenstream">§</a><code>dummy: &amp;mut TokenStream</code></h2>
+<p><a href="trait.FunctionMacroHandler.html" title="trait manyhow::FunctionMacroHandler"><code>*MacroHandler</code></a>s can also take a mutable reference
+to a <code>TokenStream</code>, to enable emitting some dummy code to be used in case
+the macro errors.</p>
+<p>This allows either appending tokens e.g., with <a href="../quote/to_tokens/trait.ToTokens.html#tymethod.to_tokens" title="method quote::to_tokens::ToTokens::to_tokens"><code>ToTokens::to_tokens</code></a> or
+directly setting the dummy code e.g., <code>*dummy = quote!{some tokens}</code>.</p>
+<h2 id="crate-features"><a class="doc-anchor" href="#crate-features">§</a>Crate features</h2>
+<ul>
+<li><code>macros</code> <strong>default</strong> Enables <a href="attr.manyhow.html" title="attr manyhow::manyhow"><code>#[manyhow]</code></a> attribute
+macro.</li>
+<li><code>syn</code>/<code>syn2</code> <strong>default</strong> Enables errors for <a href="https://docs.rs/syn/latest/syn/"><code>syn</code> 2.x</a>.</li>
+<li><code>syn1</code> Enables errors for <a href="https://docs.rs/syn/1.0.109/syn/index.html"><code>syn</code> 1.x</a>.</li>
+<li><code>darling</code> Enables errors for <a href="https://docs.rs/darling/latest/index.html"><code>darling</code></a>.</li>
+</ul>
+</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.attribute.html" title="macro manyhow::attribute">attribute</a></div><div class="desc docblock-short">Handles <a href="https://doc.rust-lang.org/reference/procedural-macros.html#attribute-macros"><code>proc_macro_attribute</code></a>
+implementation</div></li><li><div class="item-name"><a class="macro" href="macro.bail.html" title="macro manyhow::bail">bail</a></div><div class="desc docblock-short">Exit by returning error, matching <a href="https://docs.rs/anyhow/latest/anyhow/macro.bail.html"><code>anyhow::bail!</code></a>.</div></li><li><div class="item-name"><a class="macro" href="macro.derive.html" title="macro manyhow::derive">derive</a></div><div class="desc docblock-short">Handles <a href="https://doc.rust-lang.org/reference/procedural-macros.html#derive-macros"><code>proc_macro_derive</code></a>
+implementation.</div></li><li><div class="item-name"><a class="macro" href="macro.emit.html" title="macro manyhow::emit">emit</a></div><div class="desc docblock-short">Push an error to an emitter.</div></li><li><div class="item-name"><a class="macro" href="macro.ensure.html" title="macro manyhow::ensure">ensure</a></div><div class="desc docblock-short">Return early with an error, if a condition is not satisfied, matching
+<a href="https://docs.rs/anyhow/latest/anyhow/macro.ensure.html"><code>anyhow::ensure!</code></a>.</div></li><li><div class="item-name"><a class="macro" href="macro.error_message.html" title="macro manyhow::error_message">error_<wbr>message</a></div><div class="desc docblock-short">Creates an <a href="struct.ErrorMessage.html" title="struct manyhow::ErrorMessage"><code>ErrorMessage</code></a>, comparable to the <a href="https://docs.rs/anyhow/latest/anyhow/macro.anyhow.html"><code>anyhow!</code></a> macro</div></li><li><div class="item-name"><a class="macro" href="macro.function.html" title="macro manyhow::function">function</a></div><div class="desc docblock-short">Handles function like <a href="https://doc.rust-lang.org/reference/procedural-macros.html#function-like-procedural-macros"><code>proc_macro</code></a>
+implementation</div></li><li><div class="item-name"><a class="macro" href="macro.span_range.html" title="macro manyhow::span_range">span_<wbr>range</a></div><div class="desc docblock-short">Get a <a href="https://doc.rust-lang.org/1.83.0/core/ops/range/struct.Range.html" title="struct core::ops::range::Range"><code>Range</code></a><a href="../proc_macro2/struct.Span.html" title="struct proc_macro2::Span"><code>&lt;Span&gt;</code></a> from a
+type that <strong>either</strong> implements <a href="trait.SpanRanged.html" title="trait manyhow::SpanRanged"><code>SpanRanged</code></a> or <a href="../quote/to_tokens/trait.ToTokens.html" title="trait quote::to_tokens::ToTokens"><code>ToTokens</code></a> (<strong>NOT</strong>
+both).</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Emitter.html" title="struct manyhow::Emitter">Emitter</a></div><div class="desc docblock-short">Allows emitting errors without returning.</div></li><li><div class="item-name"><a class="struct" href="struct.Error.html" title="struct manyhow::Error">Error</a></div><div class="desc docblock-short">This crates Error type</div></li><li><div class="item-name"><a class="struct" href="struct.ErrorMessage.html" title="struct manyhow::ErrorMessage">Error<wbr>Message</a></div><div class="desc docblock-short">A single error message</div></li><li><div class="item-name"><a class="struct" href="struct.SilentError.html" title="struct manyhow::SilentError">Silent<wbr>Error</a></div><div class="desc docblock-short">Error that does not expand to any <a href="https://doc.rust-lang.org/1.83.0/core/macro.compile_error.html" title="macro core::compile_error"><code>compile_error!</code></a> and therefor does not
+cause compilation to fail.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.AnyTokenStream.html" title="trait manyhow::AnyTokenStream">AnyToken<wbr>Stream</a></div><div class="desc docblock-short">Marker trait for <a href="https://doc.rust-lang.org/1.83.0/proc_macro/struct.TokenStream.html" title="struct proc_macro::TokenStream"><code>proc_macro::TokenStream</code></a> and
+<a href="../proc_macro2/struct.TokenStream.html" title="struct proc_macro2::TokenStream"><code>proc_macro2::TokenStream</code></a></div></li><li><div class="item-name"><a class="trait" href="trait.Attachment.html" title="trait manyhow::Attachment">Attachment</a></div><div class="desc docblock-short">Exposes <a href="struct.ErrorMessage.html#method.attachment" title="method manyhow::ErrorMessage::attachment"><code>ErrorMessage::attachment</code></a> as a trait to allow
+<a href="trait.ResultExt.html#tymethod.attachment" title="method manyhow::ResultExt::attachment"><code>ResultExt::attachment</code></a>.</div></li><li><div class="item-name"><a class="trait" href="trait.AttributeMacroHandler.html" title="trait manyhow::AttributeMacroHandler">Attribute<wbr>Macro<wbr>Handler</a></div><div class="desc docblock-short">Input of
+an
+attribute
+proc-macro</div></li><li><div class="item-name"><a class="trait" href="trait.DeriveMacroHandler.html" title="trait manyhow::DeriveMacroHandler">Derive<wbr>Macro<wbr>Handler</a></div><div class="desc docblock-short">Input of
+a
+derive
+proc-macro</div></li><li><div class="item-name"><a class="trait" href="trait.FunctionMacroHandler.html" title="trait manyhow::FunctionMacroHandler">Function<wbr>Macro<wbr>Handler</a></div><div class="desc docblock-short">Input of
+a
+function
+proc-macro</div></li><li><div class="item-name"><a class="trait" href="trait.JoinToTokensError.html" title="trait manyhow::JoinToTokensError">Join<wbr>ToTokens<wbr>Error</a></div><div class="desc docblock-short">Allows to call <code>.join(..)</code> on any <code>impl ToTokensError</code></div></li><li><div class="item-name"><a class="trait" href="trait.MacroOutput.html" title="trait manyhow::MacroOutput">Macro<wbr>Output</a></div><div class="desc docblock-short">Output of a macro handler.</div></li><li><div class="item-name"><a class="trait" href="trait.ResultExt.html" title="trait manyhow::ResultExt">Result<wbr>Ext</a></div><div class="desc docblock-short">Some utilities on <a href="trait.ToTokensError.html" title="trait manyhow::ToTokensError"><code>Result&lt;T, impl ToTokensError&gt;</code></a></div></li><li><div class="item-name"><a class="trait" href="trait.SpanRanged.html" title="trait manyhow::SpanRanged">Span<wbr>Ranged</a></div><div class="desc docblock-short">Returns the <a href="https://doc.rust-lang.org/1.83.0/core/ops/range/struct.Range.html" title="struct core::ops::range::Range"><code>Range</code></a><a href="../proc_macro2/struct.Span.html" title="struct proc_macro2::Span"><code>&lt;Span&gt;</code></a> from the start to the end of
+multi-token structures.</div></li><li><div class="item-name"><a class="trait" href="trait.ToTokensError.html" title="trait manyhow::ToTokensError">ToTokens<wbr>Error</a></div><div class="desc docblock-short">Error that can be converted to a <a href="../proc_macro2/struct.TokenStream.html" title="struct proc_macro2::TokenStream"><code>TokenStream</code></a> required to be used with
+<a href="trait.MacroOutput.html" title="trait manyhow::MacroOutput"><code>MacroOutput</code></a></div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.attribute.html" title="fn manyhow::attribute">attribute</a></div><div class="desc docblock-short">Handles <a href="https://doc.rust-lang.org/reference/procedural-macros.html#attribute-macros"><code>proc_macro_attribute</code></a>
+implementation</div></li><li><div class="item-name"><a class="fn" href="fn.derive.html" title="fn manyhow::derive">derive</a></div><div class="desc docblock-short">Handles <a href="https://doc.rust-lang.org/reference/procedural-macros.html#derive-macros"><code>proc_macro_derive</code></a>
+implementation.</div></li><li><div class="item-name"><a class="fn" href="fn.function.html" title="fn manyhow::function">function</a></div><div class="desc docblock-short">Handles function like <a href="https://doc.rust-lang.org/reference/procedural-macros.html#function-like-procedural-macros"><code>proc_macro</code></a>
+implementation</div></li><li><div class="item-name"><a class="fn" href="fn.to_tokens_span_range.html" title="fn manyhow::to_tokens_span_range">to_<wbr>tokens_<wbr>span_<wbr>range</a></div><div class="desc docblock-short">Implementation of <a href="trait.SpanRanged.html" title="trait manyhow::SpanRanged"><code>SpanRanged</code></a><code>for T:</code><a href="../quote/to_tokens/trait.ToTokens.html" title="trait quote::to_tokens::ToTokens"><code>ToTokens</code></a></div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.Result.html" title="type manyhow::Result">Result</a></div><div class="desc docblock-short">An alias for <a href="https://doc.rust-lang.org/1.83.0/core/result/enum.Result.html" title="enum core::result::Result"><code>Result</code></a> suited for use with this crate</div></li></ul><h2 id="attributes" class="section-header">Attribute Macros<a href="#attributes" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="attr" href="attr.manyhow.html" title="attr manyhow::manyhow">manyhow</a></div><div class="desc docblock-short">Attribute macro to remove boilerplate from proc macro entry points.</div></li></ul></section></div></main></body></html>

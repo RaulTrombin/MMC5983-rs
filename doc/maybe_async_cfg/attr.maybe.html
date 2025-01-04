@@ -1,0 +1,344 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Marks the code that can be presented in several versions."><title>maybe in maybe_async_cfg - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="maybe_async_cfg" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc attr"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../maybe_async_cfg/index.html">maybe_<wbr>async_<wbr>cfg</a><span class="version">0.2.5</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">maybe</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-maybe-macro-has-the-following-parameters" title="The `maybe` macro has the following parameters:">The <code>maybe</code> macro has the following parameters:</a></li><li><a href="#every-version-has-the-following-parameters" title="Every version has the following parameters:">Every version has the following parameters:</a></li><li><a href="#formal-syntax" title="Formal syntax">Formal syntax</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate maybe_<wbr>async_<wbr>cfg</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">maybe_async_cfg</a></span><h1>Attribute Macro <span class="attr">maybe</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/maybe_async_cfg/lib.rs.html#630">source</a> </span></div><pre class="rust item-decl"><code>#[maybe]</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Marks the code that can be presented in several versions.</p>
+<h4 id="the-maybe-macro-has-the-following-parameters"><a class="doc-anchor" href="#the-maybe-macro-has-the-following-parameters">§</a>The <code>maybe</code> macro has the following parameters:</h4>
+<ul>
+<li>
+<p><code>disable</code></p>
+<p>The macro with <code>disable</code> parameter will do nothing, like <code>noop</code>. Use it to write and debug
+initial async code.</p>
+</li>
+<li>
+<p><code>prefix</code></p>
+<p>The name of <code>maybe-async-cfg</code> crate. If not set, <code>"maybe_async_cfg"</code> will be used.</p>
+</li>
+<li>
+<p><code>sync</code>, <code>async</code></p>
+<p>Defines versions of the code: the item to which the attribute <code>maybe</code> refers will be
+replaced with multiple copies (one for each version), which will be modified according to
+the version kind and its parameters.</p>
+<p>For the <code>sync</code> version, the item will be converted from async to sync code by deleting
+the <code>async</code> and <code>await</code> keywords. The types <code>Future&lt;Output=XXX&gt;</code> will also be replaced with just
+<code>XXX</code>. For the  <code>async</code> version, the item will be left async.</p>
+<p>In any case, the item will be converted according to all the parameters described below. For
+functions, structs/enums and traits, the name will be changed as if it is mentioned in the
+<code>idents</code> list (if it is not explicitly specified there and if <code>keep_self</code> is not present).</p>
+</li>
+<li>
+<p>All other parameters will be passed to all versions (with merging).</p>
+<p>Therefore, those parts of the version parameters that match in all versions can be specified
+here. For example, this is the expected behavior for the <code>idents</code> list.</p>
+</li>
+</ul>
+<h4 id="every-version-has-the-following-parameters"><a class="doc-anchor" href="#every-version-has-the-following-parameters">§</a>Every version has the following parameters:</h4>
+<ul>
+<li>
+<p><code>disable</code></p>
+<p>Ignore this version entirely.</p>
+</li>
+<li>
+<p><code>key</code></p>
+<p>Defines unique name of the version to use it in <code>only_if</code>/<code>remove_if</code> conditions. If
+omitted, <code>sync</code>/<code>async</code> will be used.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    sync(key=<span class="string">"foo"</span>, feature=<span class="string">"use_sync"</span>),
+    <span class="kw">async</span>(key=<span class="string">"bar"</span>, feature=<span class="string">"use_async"</span>),
+)]
+</span><span class="kw">struct </span>Struct {
+    f: usize,
+     
+    <span class="comment">// This field will only be present in sync version
+    </span><span class="attr">#[maybe_async_cfg::only_if(key=<span class="string">"foo"</span>)]
+    </span>sync_only_field: bool,
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">struct </span>StructSync {
+    f: usize,
+    sync_only_field: bool,
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">struct </span>StructAsync {
+    f: usize,
+}</code></pre></div>
+</li>
+<li>
+<p><code>cfg</code></p>
+<p>Defines the condition (based on features), under which the current version should appear.</p>
+<p>Note: conditions like <code>feature = "..."</code>, <code>not(...)</code>, <code>all(...)</code>, <code>any(...)</code> will be
+processed correctly, even if the <code>cfg(...)</code> was omitted.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    sync(cfg(feature=<span class="string">"use_sync"</span>)),
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>)
+)]
+</span><span class="kw">struct </span>Struct {
+    f: Foo,
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">struct </span>StructSync {
+    f: Foo,
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">struct </span>StructAsync {
+    f: Foo,
+}</code></pre></div>
+</li>
+<li>
+<p><code>idents</code></p>
+<p>Defines a list of identifiers that should be renamed depending on the version of the code.</p>
+<p>Each identifier can have the following clarifying parameters:</p>
+<ul>
+<li>
+<p><code>snake</code>, <code>fn</code>, <code>mod</code></p>
+<p>means that this is the snake-case name of the function or module and it should be
+converted by adding the suffixes <code>"_sync"</code>/<code>"_async"</code> (otherwise, the suffixes
+<code>"Sync"</code>/<code>"Async"</code> will be used).</p>
+</li>
+<li>
+<p><code>use</code></p>
+<p>in <code>use</code> lists, using this identifier will result in renaming via the <code>as</code> expression,
+rather than a simple replacement as is. In other cases, a simple replacement will be used.</p>
+</li>
+<li>
+<p><code>keep</code></p>
+<p>this identifier will not be converted anywhere</p>
+</li>
+<li>
+<p><code>sync</code>, <code>async</code></p>
+<p>specifies the name that will be used in the corresponding version of the code. Overrides
+the standard scheme of suffixes used by default. If the parameter value is omitted,
+the identifier will not be renamed in this case.</p>
+</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    idents(
+        Foo,
+        Bar,
+        baz(<span class="kw">fn</span>),
+        Qux(<span class="kw">use</span>),
+        waldo(sync, <span class="kw">async</span>=<span class="string">"async_waldo"</span>),
+        xyzzy(<span class="kw">fn</span>, <span class="kw">use</span>, sync=<span class="string">"xizzy_the_sync_func"</span>),
+    ),
+    sync(feature=<span class="string">"use_sync"</span>),
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>),
+)]
+</span><span class="kw">async fn </span>func() {
+    <span class="kw">struct </span>Foo {}
+    <span class="kw">use </span>extcrate::{
+        Bar,
+        baz,
+        Qux,
+        waldo::{
+            plugh,
+            xyzzy
+        }
+    };
+    <span class="kw">let _ </span>= baz( Foo {}, Bar::new() ).<span class="kw">await</span>;
+    <span class="kw">let _ </span>= xizzy( Qux::flob(b).<span class="kw">await </span>);
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">fn </span>func_sync() {
+    <span class="kw">struct </span>FooSync {}
+    <span class="kw">use </span>extcrate::{
+        BarSync,
+        baz_sync,
+        Qux <span class="kw">as </span>QuxSync,
+        waldo::{
+            plugh,
+            xyzzy <span class="kw">as </span>xizzy_the_sync_func
+        }
+    };         
+    <span class="kw">let _ </span>= baz_sync( FooSync {}, BarSync::new() );
+    <span class="kw">let _ </span>= xizzy_the_sync_func( QuxSync::flob() );
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">async fn </span>func_async() {
+    <span class="kw">struct </span>FooAsync {}
+    <span class="kw">use </span>extcrate::{
+        BarAsync,
+        baz_async,
+        Qux <span class="kw">as </span>QuxAsync,
+        async_waldo::{
+            plugh,
+            xyzzy <span class="kw">as </span>xyzzy_async
+        }
+    };
+    <span class="kw">let _ </span>= baz_async( FooAsync {}, BarAsync::new() ).<span class="kw">await</span>;
+    <span class="kw">let _ </span>= xyzzy_async( QuxAsync::flob().<span class="kw">await </span>);     
+}</code></pre></div>
+</li>
+<li>
+<p><code>keep_self</code></p>
+<p>Do not change name of item to which attribute <code>maybe</code> refers.</p>
+</li>
+<li>
+<p><code>self</code></p>
+<p>Defines the name that will be assigned to the item in this variant.</p>
+</li>
+<li>
+<p><code>send</code></p>
+<p>If <code>send = "Send"</code> or <code>send = "true"</code> is present, the attribute
+<code>#[async_trait::async_trait]</code> will be added before the async code. If <code>send = "?Send"</code> or
+<code>send = "false"</code> then <code>#[async_trait::async_trait(?Send)]</code> will be added.</p>
+</li>
+<li>
+<p><code>drop_attrs</code></p>
+<p>Remove any attributes with specified names.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    sync(feature=<span class="string">"use_sync"</span>, drop_attrs(attr)),
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>),
+)]
+</span><span class="kw">struct </span>Struct {
+    f: usize,
+
+    <span class="comment">// This attribute will be removed in sync version
+    </span><span class="attr">#[attr(param)]
+    </span>field1: bool,
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">struct </span>StructSync {
+    f: usize,
+    field1: bool,
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">struct </span>StructAsync {
+    f: usize,
+    <span class="attr">#[attr(param)]
+    </span>field1: bool,
+}</code></pre></div>
+</li>
+<li>
+<p><code>replace_features</code></p>
+<p>Replace one feature name with another.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    sync(feature=<span class="string">"use_sync"</span>, replace_feature(<span class="string">"secure"</span>, <span class="string">"secure_sync"</span>)),
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>),
+)]
+</span><span class="kw">struct </span>Struct {
+    f: usize,
+    <span class="comment">// In sync version "secure" feature will be replaced with "secure_sync" feature
+    </span><span class="attr">#[cfg(feature=<span class="string">"secure"</span>)]
+    </span>field: bool,
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">struct </span>StructSync {
+    f: usize,
+    <span class="attr">#[cfg(feature=<span class="string">"secure_sync"</span>)]
+    </span>field: bool,
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">struct </span>StructAsync {
+    f: usize,
+    <span class="attr">#[cfg(feature=<span class="string">"secure"</span>)]
+    </span>field: bool,
+}</code></pre></div>
+</li>
+<li>
+<p><code>inner</code>, <code>outer</code></p>
+<p>Adds some attributes to the generated code. Inner attributes will appear below attribute
+<code>#[cfg(...)]</code>, outer attributes will appear above it.</p>
+<p>Note: if the version parameter is not parsed as a parameter of some other type, it will be
+interpreted as an inner attribute.</p>
+<p>Useful for testing: just write <code>test</code> in version parameters.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    sync(feature=<span class="string">"secure_sync"</span>, test, <span class="string">"resource(path = \"/foo/bar\")"</span>, outer(xizzy)),
+    <span class="kw">async</span>(feature=<span class="string">"secure_sync"</span>, inner(baz(qux), async_attributes::test)),
+)]
+</span><span class="kw">async fn </span>test_func() {
+    <span class="macro">todo!</span>()
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[xizzy]
+#[cfg(feature=<span class="string">"use_sync"</span>)]
+#[test]
+#[resource(path = <span class="string">"/foo/bar"</span>)]
+</span><span class="kw">fn </span>test_func_sync() {
+    <span class="macro">todo!</span>()
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+#[baz(qux)]
+#[async_attributes::test]
+</span><span class="kw">async fn </span>test_func_async() {
+    <span class="macro">todo!</span>()
+}</code></pre></div>
+</li>
+<li>
+<p>In other cases, the following rules apply:</p>
+<ul>
+<li>
+<p>name-value pairs (<code>xxx = "yyy"</code>) with a name other than <code>key</code>, <code>prefix</code>, <code>send</code> and
+<code>feature</code> will produce an error.</p>
+</li>
+<li>
+<p><code>feature = "..."</code>, <code>not(...)</code>, <code>all(...)</code>, <code>any(...)</code> will be interpreted as condition for
+current version (as wrapped in <code>cfg(...)</code>).</p>
+</li>
+<li>
+<p>all another parameters will be interpreted as inner attribute for current version (as
+wrapped in <code>inner(...)</code>).</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="formal-syntax"><a class="doc-anchor" href="#formal-syntax">§</a>Formal syntax</h4>
+<blockquote>
+<p><em>ParametersList</em> :<br />
+    <em>Parameter</em> (<code>,</code> <em>Parameter</em>)<sup>*</sup></p>
+<p><em>Parameter</em> :<br />
+    <code>disable</code><br />
+  | <code>keep_self</code><br />
+  | <code>prefix</code> <code>=</code> <em>STRING_LITERAL</em><br />
+  | (<code>sync</code> | <code>async</code>) <code>(</code> <em>VersionParametersList</em> <code>)</code><br />
+  | <code>idents</code> <code>(</code> <em>IdentsList</em> <code>)</code>\</p>
+<p><em>VersionParametersList</em> :<br />
+    <em>VersionParameter</em> (<code>,</code> <em>VersionParameter</em>)<sup>*</sup></p>
+<p><em>VersionParameter</em> :<br />
+    <code>disable</code><br />
+  | <code>keep_self</code><br />
+  | <code>key</code> <code>=</code> <em>STRING_LITERAL</em><br />
+  | <code>feature</code> <code>=</code> <em>STRING_LITERAL</em><br />
+  | <code>self</code> <code>=</code> <em>STRING_LITERAL</em><br />
+  | <code>send</code> <code>=</code> (<code>""</code> | <code>"Send"</code> | <code>"true"</code> | <code>"?Send"</code> | <code>"false"</code>)<br />
+  | (<code>cfg</code> | <code>any</code> | <code>all</code> | <code>not</code>) <code>(</code> <em>ANY_CFG_CONDITION</em> <code>)</code><br />
+  | <code>idents</code> <code>(</code> <em>IdentsList</em> <code>)</code><br />
+  | (<code>outer</code> | <code>inner</code>) <code>(</code> <em>AttributesList</em> <code>)</code><br />
+  | <code>replace_feature</code> <code>(</code> <em>STRING_LITERAL</em> <code>,</code> <em>STRING_LITERAL</em> <code>)</code><br />
+  | <code>drop_attrs</code> <code>(</code> <em>IdentifiersList</em> <code>)</code><br />
+  | <em>Attribute</em></p>
+<p><em>Path</em> :<br />
+    <em>IDENTIFIER</em> (<code>::</code> <em>IDENTIFIER</em>)<sup>+</sup></p>
+<p><em>IdentifiersList</em> :<br />
+    <em>IDENTIFIER</em> (<code>,</code> <em>IDENTIFIER</em>)<sup>*</sup></p>
+<p><em>IdentsList</em> :<br />
+    <em>Ident</em> (<code>,</code> <em>Ident</em>)<sup>*</sup></p>
+<p><em>Ident</em> :<br />
+    <em>IDENTIFIER</em> (<code>(</code> <em>IdentParametersList</em> <code>)</code>)<sup>?</sup></p>
+<p><em>IdentParametersList</em> :<br />
+    <em>IdentParameter</em> (<code>,</code> <em>IdentParameter</em>)<sup>*</sup></p>
+<p><em>IdentParameter</em> :<br />
+    <code>keep</code><br />
+  | <code>use</code><br />
+  | (<code>snake</code> | <code>fn</code> | <code>mod</code> )<br />
+  | <code>use</code><br />
+  | (<code>sync</code> | <code>async</code> | <em>IDENTIFIER</em>) (<code>=</code> <em>STRING_LITERAL</em>)<sup>?</sup></p>
+<p><em>AttributesList</em> :<br />
+    <em>Attribute</em> (<code>,</code> <em>Attribute</em>)<sup>*</sup></p>
+<p><em>Attribute</em> :<br />
+    (<em>IDENTIFIER</em> | <em>Path</em>) (<code>(</code> <em>ANY_VALID_ARGS</em> <code>)</code>)<sup>?</sup><br />
+  | <em>STRING_LITERAL</em></p>
+</blockquote>
+</div></details></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BandwidthMode","Error","MagMode","MagOutputDataRate","SetResetPeriod"],"mod":["interface","mode","register_address"],"struct":["MagneticField","Mmc5983","ProductId","Status","Temperature"]};

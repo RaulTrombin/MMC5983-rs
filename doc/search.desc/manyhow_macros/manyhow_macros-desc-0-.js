@@ -1,0 +1,1 @@
+searchState.loadedDescShard("manyhow_macros", 0, "Attribute macro to remove boilerplate from proc macro …")

@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Allows simple unit testing of proc macro implementations."><title>assert_expansion in proc_macro_utils - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="proc_macro_utils" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../proc_macro_utils/index.html">proc_<wbr>macro_<wbr>utils</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">assert_<wbr>expansion</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#function-like-macros" title="Function like macros">Function like macros</a></li><li><a href="#derive-macros" title="Derive macros">Derive macros</a></li><li><a href="#attribute-macros" title="Attribute macros">Attribute macros</a></li><li><a href="#generic-usage" title="Generic usage">Generic usage</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate proc_<wbr>macro_<wbr>utils</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">proc_macro_utils</a></span><h1>Macro <span class="macro">assert_expansion</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/proc_macro_utils/assert.rs.html#151-182">source</a> </span></div><pre class="rust item-decl"><span class="macro">macro_rules!</span> assert_expansion {
+    (<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro">ident!</span>($(<span class="macro-nonterminal">$input</span>:tt)<span class="kw-2">*</span>)$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>, { $(<span class="macro-nonterminal">$rhs</span>:tt)* }) =&gt; { ... };
+    (<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro">ident!</span>[$(<span class="macro-nonterminal">$input</span>:tt)<span class="kw-2">*</span>]$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>, { $(<span class="macro-nonterminal">$rhs</span>:tt)* }) =&gt; { ... };
+    (<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro">ident!</span>{$(<span class="macro-nonterminal">$input</span>:tt)<span class="kw-2">*</span>}$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>, { $(<span class="macro-nonterminal">$rhs</span>:tt)* }) =&gt; { ... };
+    (<span class="attr">#[derive(<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro-nonterminal">ident</span>)]</span><span class="macro-nonterminal">$item</span>:item$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>$(,)<span class="question-mark">? </span>{ $(<span class="macro-nonterminal">$rhs</span>:tt)* }) =&gt; { ... };
+    (<span class="attr">#[<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro-nonterminal">ident</span>]</span><span class="macro-nonterminal">$item</span>:item$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>$(,)<span class="question-mark">? </span>{ $(<span class="macro-nonterminal">$rhs</span>:tt)* }) =&gt; { ... };
+    (<span class="attr">#[<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro-nonterminal">ident </span>= <span class="macro-nonterminal">$input</span>:expr]</span><span class="macro-nonterminal">$item</span>:item$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>$(,)<span class="question-mark">? </span>{ $(<span class="macro-nonterminal">$rhs</span>:tt)* }) =&gt; { ... };
+    (<span class="attr">#[<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro-nonterminal">ident</span>($(<span class="macro-nonterminal">$input</span>:tt)<span class="kw-2">*</span>)]</span><span class="macro-nonterminal">$item</span>:item$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>$(,)<span class="question-mark">? </span>{ $(<span class="macro-nonterminal">$rhs</span>:tt)* }) =&gt; { ... };
+    (<span class="macro-nonterminal">$</span><span class="kw">macro</span>:<span class="macro-nonterminal">ident</span>($({$(<span class="macro-nonterminal">$input</span>:tt)<span class="kw-2">*</span>}),+$(,)<span class="question-mark">?</span>)$(.<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>())<span class="question-mark">?</span>, {$(<span class="macro-nonterminal">$rhs</span>:tt)<span class="kw-2">*</span>}) =&gt; { ... };
+}</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Allows simple unit testing of proc macro implementations.</p>
+<p>This macro only works with functions taking <a href="../proc_macro2/struct.TokenStream.html" title="struct proc_macro2::TokenStream"><code>proc_macro2::TokenStream</code></a> due
+to the <a href="https://doc.rust-lang.org/1.83.0/proc_macro/index.html" title="mod proc_macro"><code>proc_macro</code></a> API not being available in unit tests. This can be
+achieved either by manually creating a separate function:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>proc_macro::TokenStream;
+<span class="kw">use </span>proc_macro2::TokenStream <span class="kw">as </span>TokenStream2;
+<span class="attr">#[proc_macro]
+</span><span class="kw">pub fn </span>actual_macro(input: TokenStream) -&gt; TokenStream {
+    macro_impl(input.into()).into()
+}
+<span class="kw">fn </span>macro_impl(input: TokenStream2) -&gt; TokenStream2 {
+    <span class="comment">// ...
+</span>}</code></pre></div>
+<p>or use a crate like <a href="https://docs.rs/manyhow/"><code>manyhow</code></a>:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>proc_macro2::TokenStream <span class="kw">as </span>TokenStream2;
+<span class="attr">#[manyhow(impl_fn)] </span><span class="comment">// generates `fn actual_macro_impl`
+</span><span class="kw">pub fn </span>actual_macro(input: TokenStream2) -&gt; TokenStream2 {
+    <span class="comment">// ...
+</span>}</code></pre></div>
+<h2 id="function-like-macros"><a class="doc-anchor" href="#function-like-macros">§</a>Function like macros</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Dummy attribute macro impl
+</span><span class="kw">fn </span>macro_impl(input: TokenStream) -&gt; TokenStream {
+    <span class="macro">quote!</span>(#input)
+}
+<span class="kw">fn </span>macro_impl_result(input: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, ()&gt; {
+    <span class="prelude-val">Ok</span>(<span class="macro">quote!</span>(#input))
+}
+<span class="macro">assert_expansion!</span>(
+    <span class="macro">macro_impl!</span>(something test),
+    { something test }
+);
+<span class="macro">assert_expansion!</span>(
+    <span class="macro">macro_impl!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],
+    { <span class="number">1</span>, <span class="number">2</span>, <span class="number">3 </span>}
+);
+<span class="macro">assert_expansion!</span>(
+    <span class="macro">macro_impl!</span>{ braced },
+    { braced }
+);
+<span class="comment">// adding a single function call (without arguments) is also allowed e.g. `unwrap()`
+</span><span class="macro">assert_expansion!</span>(
+    <span class="macro">macro_impl_result!</span>(result).unwrap(),
+    { result }
+);</code></pre></div>
+<h2 id="derive-macros"><a class="doc-anchor" href="#derive-macros">§</a>Derive macros</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Dummy derive macro impl
+</span><span class="kw">fn </span>macro_impl(item: TokenStream) -&gt; TokenStream {
+    <span class="macro">quote!</span>(#item)
+}
+<span class="kw">fn </span>macro_impl_result(item: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, ()&gt; {
+    <span class="prelude-val">Ok</span>(<span class="macro">quote!</span>(#item))
+}
+<span class="macro">assert_expansion!</span>(
+    <span class="attr">#[derive(macro_impl)]
+    </span><span class="kw">struct </span>A; <span class="comment">// the comma after items is optional
+    </span>{ <span class="kw">struct </span>A; }
+);
+<span class="macro">assert_expansion!</span>(
+    <span class="attr">#[derive(macro_impl)]
+    </span><span class="kw">struct </span>A {}
+    { <span class="kw">struct </span>A {} }
+);
+<span class="comment">// adding a single function call (without arguments) is also allowed e.g. `unwrap()`
+</span><span class="macro">assert_expansion!</span>(
+    <span class="attr">#[derive(macro_impl_result)]
+    </span><span class="kw">struct </span>A {}.unwrap()
+    { <span class="kw">struct </span>A {} }
+);
+<span class="comment">// alternatively the proc_macro syntax is compatible
+</span><span class="macro">assert_expansion!</span>(
+    <span class="macro">macro_impl!</span>{ <span class="kw">struct </span>A {} },
+    { <span class="kw">struct </span>A {} }
+);</code></pre></div>
+<h2 id="attribute-macros"><a class="doc-anchor" href="#attribute-macros">§</a>Attribute macros</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Dummy attribute macro impl
+</span><span class="kw">fn </span>macro_impl(input: TokenStream, item: TokenStream) -&gt; TokenStream {
+    <span class="macro">quote!</span>(#input, #item)
+}
+<span class="kw">fn </span>macro_impl_result(input: TokenStream, item: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, ()&gt; {
+    <span class="prelude-val">Ok</span>(<span class="macro">quote!</span>(#input, #item))
+}
+<span class="macro">assert_expansion!</span>(
+    <span class="attr">#[macro_impl]
+    </span><span class="kw">struct </span>A;
+    { , <span class="kw">struct </span>A; }
+);
+<span class="macro">assert_expansion!</span>(
+    <span class="attr">#[macro_impl = <span class="string">"hello"</span>]
+    </span><span class="kw">fn </span>test() { }, <span class="comment">// the comma after items is optional
+    </span>{ <span class="string">"hello"</span>, <span class="kw">fn </span>test() {} }
+);
+<span class="macro">assert_expansion!</span>(
+    <span class="attr">#[macro_impl(a = <span class="number">10</span>)]
+    </span><span class="kw">impl </span>Hello <span class="kw">for </span>World {},
+    { a = <span class="number">10</span>, <span class="kw">impl </span>Hello <span class="kw">for </span>World {} }
+);
+<span class="comment">// adding a single function call (without arguments) is also allowed e.g. `unwrap()`
+</span><span class="macro">assert_expansion!</span>(
+    <span class="attr">#[macro_impl_result(a = <span class="number">10</span>)]
+    </span><span class="kw">impl </span>Hello <span class="kw">for </span>World {}.unwrap(),
+    { a = <span class="number">10</span>, <span class="kw">impl </span>Hello <span class="kw">for </span>World {} }
+);</code></pre></div>
+<h2 id="generic-usage"><a class="doc-anchor" href="#generic-usage">§</a>Generic usage</h2>
+<p>On top of the normal macro inputs a generic input is also supported.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>macro_impl(first: TokenStream, second: TokenStream, third: TokenStream) -&gt; TokenStream {
+    <span class="macro">quote!</span>(#first, #second, #third)
+}
+<span class="kw">fn </span>macro_impl_result(first: TokenStream, second: TokenStream, third: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, ()&gt; {
+    <span class="prelude-val">Ok</span>(<span class="macro">quote!</span>(#first, #second, #third))
+}
+<span class="macro">assert_expansion!</span>(
+    macro_impl({ <span class="number">1 </span>}, { something }, { <span class="string">":)" </span>}),
+    { <span class="number">1</span>, something, <span class="string">":)" </span>}
+);
+<span class="comment">// adding a single function call (without arguments) is also allowed e.g. `unwrap()`
+</span><span class="macro">assert_expansion!</span>(
+    macro_impl_result({ <span class="number">1 </span>}, { something }, { <span class="string">":)" </span>}).unwrap(),
+    { <span class="number">1</span>, something, <span class="string">":)" </span>}
+);</code></pre></div>
+</div></details></section></div></main></body></html>

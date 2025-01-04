@@ -1,0 +1,191 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Maybe-Async-Cfg Procedure Macro"><title>maybe_async_cfg - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="maybe_async_cfg" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../maybe_async_cfg/index.html">maybe_<wbr>async_<wbr>cfg</a><span class="version">0.2.5</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#maybe-async-cfg-procedure-macro" title="Maybe-Async-Cfg Procedure Macro">Maybe-Async-Cfg Procedure Macro</a><ul><li><a href="#motivation" title="Motivation">Motivation</a></li><li><a href="#macros-in-detail" title="Macros in Detail">Macros in Detail</a></li><li><a href="#doctests" title="Doctests">Doctests</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#acknowledgements" title="Acknowledgements">Acknowledgements</a></li></ul></li><li><a href="#license" title="License">License</a></li></ul><h3><a href="#macros">Crate Items</a></h3><ul class="block"><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#attributes" title="Attribute Macros">Attribute Macros</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>maybe_async_cfg</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/maybe_async_cfg/lib.rs.html#1-711">source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="maybe-async-cfg-procedure-macro"><a class="doc-anchor" href="#maybe-async-cfg-procedure-macro">§</a>Maybe-Async-Cfg Procedure Macro</h2>
+<p><strong>Why bother writing similar code twice for blocking and async code?</strong></p>
+<p><a href="https://github.com/nvksv/maybe-async-cfg/actions"><img src="https://github.com/nvksv/maybe-async-cfg/actions/workflows/rust.yml/badge.svg?branch=main" alt="Build Status" /></a>
+<a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licensed" /></a>
+<a href="https://crates.io/crates/maybe-async-cfg"><img src="https://img.shields.io/crates/v/maybe-async-cfg.svg" alt="Latest Version" /></a>
+<a href="https://docs.rs/maybe-async-cfg"><img src="https://docs.rs/maybe-async-cfg/badge.svg" alt="maybe-async" /></a></p>
+<p>When implementing both sync and async versions of API in a crate, most API of the two version
+are almost the same except for some async/await keyword.</p>
+<p><code>maybe-async-cfg</code> help unifying async and sync implementation by <strong>procedural macro</strong>.</p>
+<ul>
+<li>Write async code with normal <code>async</code>, <code>await</code>, and let <code>maybe_async_cfg</code> handles those <code>async</code>
+and <code>await</code> when you need a blocking code.</li>
+<li>Add <code>maybe</code> attributes and specify feature-based conditions under which sync or async code
+should be generated.</li>
+<li>Use <code>only_if</code> (or <code>remove_if</code>) to keep code in specified version if necessary.</li>
+</ul>
+<p>The <code>maybe</code> procedural macro can be applied to the following codes:</p>
+<ul>
+<li>use declaration</li>
+<li>trait declaration</li>
+<li>trait implementation</li>
+<li>function definition</li>
+<li>struct and enum definition</li>
+<li>modules</li>
+</ul>
+<p><strong>RECOMMENDATION</strong>: Enable <strong>resolver ver2</strong> in your crate, which is introduced in Rust 1.51. If
+not, two crates in dependency with conflict version (one async and another blocking) can fail
+compilation.</p>
+<h3 id="motivation"><a class="doc-anchor" href="#motivation">§</a>Motivation</h3>
+<p>The async/await language feature alters the async world of rust. Comparing with the map/and_then
+style, now the async code really resembles sync version code.</p>
+<p>In many crates, the async and sync version of crates shares the same API, but the minor
+difference that all async code must be awaited prevent the unification of async and sync code.
+In other words, we are forced to write an async and an sync implementation respectively.</p>
+<h3 id="macros-in-detail"><a class="doc-anchor" href="#macros-in-detail">§</a>Macros in Detail</h3>
+<p>To use <code>maybe-async-cfg</code>, we must know which block of codes is only used on sync implementation,
+and which on async. These two versions of the implementation should share the same function
+signatures except for async/await keywords.</p>
+<p>Use <code>maybe</code> macro for code that is the same in both async and sync versions except for
+async/await keywords. Specify in the macro parameters the conditions (based on features) under
+which async and/or sync versions of the code should appear.</p>
+<ul>
+<li>
+<p>attribute macro <strong><code>maybe</code></strong></p>
+<p>Offers a unified way to provide sync and async conversion on demand depending on features,
+enabled for your crate, with <strong>async first</strong> policy.</p>
+<div class="example-wrap"><pre class="language-toml"><code>[dependencies]
+maybe_async_cfg = &quot;0.2&quot;
+
+[features]
+use_sync = []
+use_async = []</code></pre></div>
+<p>In this and all the following examples, we use two features. But you can use any conditions
+that are convenient for you, for example, replacing <code>feature="use_sync"</code> with
+<code>not(feature="use_async")</code> everywhere. Feel free, <code>maybe-async-cfg</code> does not analyze the
+conditions in any way, just substituting them as is.</p>
+<p>Add the <code>maybe</code> attribute before all the items that need to be changed in different versions
+of the code (sync or async).</p>
+<p>Want to keep async code? Specify the <code>async</code> parameter with the condition (based on
+features) when your code should be async.</p>
+<p>Wanna convert async code to sync? Specify the <code>sync</code> parameter with the condition when the
+sync code should be generated.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    idents(Foo),
+    sync(feature=<span class="string">"use_sync"</span>),
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>)
+)]
+</span><span class="kw">struct </span>Struct {
+    f: Foo,
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">struct </span>StructSync {
+    f: FooSync,
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">struct </span>StructAsync {
+    f: FooAsync,
+}</code></pre></div>
+</li>
+<li>
+<p>procedural macro <strong><code>content</code></strong></p>
+<p>The <code>content</code> macro allows you to specify common parameters for many <code>maybe</code> macros. Use the
+internal <code>default</code> attribute with the required parameters inside the <code>content</code> macro.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">maybe_async_cfg::content!</span>{
+<span class="attr">#![maybe_async_cfg::default(
+    idents(Foo, Bar),
+)]
+
+#[maybe_async_cfg::maybe(
+    sync(feature=<span class="string">"use_sync"</span>), 
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>)
+)]
+</span><span class="kw">struct </span>Struct {
+    f: Foo,
+}
+
+<span class="attr">#[maybe_async_cfg::maybe(
+    sync(feature=<span class="string">"use_sync"</span>), 
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>)
+)]
+</span><span class="kw">async fn </span>func(b: Bar) {
+    <span class="macro">todo!</span>()
+}
+} <span class="comment">// content!</span></code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">struct </span>StructSync {
+    f: FooSync,
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">struct </span>StructAsync {
+    f: FooAsync,
+}
+
+<span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="kw">fn </span>func_sync(b: BarSync) {
+    <span class="macro">todo!</span>()
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="kw">async fn </span>func_async(b: BarAsync) {
+    <span class="macro">todo!</span>()
+}</code></pre></div>
+</li>
+</ul>
+<h3 id="doctests"><a class="doc-anchor" href="#doctests">§</a>Doctests</h3>
+<p>When writing doctests, you can mark them as applicable only in the corresponding code version.
+To do this, specify <code>only_if(</code><em>VARIANT_KEY</em><code>)</code> in the doctest attributes. Then in all other
+versions of the code, this doctest will be replaced with an empty string.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[maybe_async_cfg::maybe(
+    idents(Foo),
+    sync(feature=<span class="string">"use_sync"</span>),
+    <span class="kw">async</span>(feature=<span class="string">"use_async"</span>)
+)]
+</span><span class="doccomment">/// This is a structure. 
+/// ```rust, only_if(sync)
+/// let s = StructSync{ f: FooSync::new() };
+/// ```
+/// ```rust, only_if(async)
+/// let s = StructAsync{ f: FooAsync::new().await };
+/// ```
+</span><span class="kw">struct </span>Struct {
+    f: Foo,
+}</code></pre></div>
+<p>After conversion:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature=<span class="string">"use_sync"</span>)]
+</span><span class="doccomment">/// This is a structure. 
+/// ```rust, only_if(sync)
+/// let s = StructSync{ f: FooSync::new() };
+/// ```
+///
+</span><span class="kw">struct </span>StructSync {
+f: FooSync,
+}
+<span class="attr">#[cfg(feature=<span class="string">"use_async"</span>)]
+</span><span class="doccomment">/// This is a structure. 
+///
+/// ```rust, only_if(async)
+/// let s = StructAsync{ f: FooAsync::new().await };
+/// ```
+</span><span class="kw">struct </span>StructAsync {
+    f: FooAsync,
+}</code></pre></div>
+<h3 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h3><h4 id="rust-client-for-services"><a class="doc-anchor" href="#rust-client-for-services">§</a>rust client for services</h4>
+<p>When implementing rust client for any services, like awz3. The higher level API of async and
+sync version is almost the same, such as creating or deleting a bucket, retrieving an object and
+etc.</p>
+<p>The example <code>service_client</code> is a proof of concept that <code>maybe_async_cfg</code> can actually free us
+from writing almost the same code for sync and async. We can toggle between a sync AWZ3 client
+and async one by <code>is_sync</code> feature gate when we add <code>maybe-async-cfg</code> to dependency.</p>
+<h3 id="acknowledgements"><a class="doc-anchor" href="#acknowledgements">§</a>Acknowledgements</h3>
+<p>This crate is a redesigned fork of these wonderful crates:</p>
+<ul>
+<li>
+<p><a href="https://github.com/fMeow/maybe-async-rs">fMeow/maybe-async-rs</a></p>
+</li>
+<li>
+<p><a href="https://github.com/marioortizmanero/maybe-async-rs">marioortizmanero/maybe-async-rs</a></p>
+</li>
+</ul>
+<p>Thanks!</p>
+<h2 id="license"><a class="doc-anchor" href="#license">§</a>License</h2>
+<p>MIT</p>
+</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.content.html" title="macro maybe_async_cfg::content">content</a></div><div class="desc docblock-short">A wrapper for code with common <code>maybe</code> parameters</div></li></ul><h2 id="attributes" class="section-header">Attribute Macros<a href="#attributes" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="attr" href="attr.maybe.html" title="attr maybe_async_cfg::maybe">maybe</a></div><div class="desc docblock-short">Marks the code that can be presented in several versions.</div></li><li><div class="item-name"><a class="attr" href="attr.noop.html" title="attr maybe_async_cfg::noop">noop</a></div><div class="desc docblock-short">Does nothing (leaves content intact).</div></li><li><div class="item-name"><a class="attr" href="attr.only_if.html" title="attr maybe_async_cfg::only_if">only_if</a></div><div class="desc docblock-short">Marks conditional content that should only be used in the specified version of the code.</div></li><li><div class="item-name"><a class="attr" href="attr.remove.html" title="attr maybe_async_cfg::remove">remove</a></div><div class="desc docblock-short">Removes marked content.</div></li><li><div class="item-name"><a class="attr" href="attr.remove_if.html" title="attr maybe_async_cfg::remove_if">remove_<wbr>if</a></div><div class="desc docblock-short">Marks conditional content that should be used in all versions of the code except the specified
+one.</div></li></ul></section></div></main></body></html>
