@@ -1,6 +1,6 @@
 [package]
 name = "mmc5983_rs"
-version = "0.0.1"
+version = "0.0.0"
 edition = "2021"
 license = "MIT"
 description = "A Rust library for interacting with the MMC5983 magnetometer"
